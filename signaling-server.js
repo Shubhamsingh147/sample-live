@@ -1,48 +1,77 @@
 class SignalingServer {
     constructor() {
-        this.peers = {};
+        this.onlinePeers = new Set();
+        this.messages = [];
+        this.pollingInterval = null;
     }
 
     initialize() {
-        // Initialization logic, e.g., setting up WebSocket server
+        this.startPolling();
+        console.log('Signaling server initialized.');
     }
 
-    updatePresence(peerId, isOnline) {
-        if (isOnline) {
-            this.peers[peerId] = true;
+    updatePresence(peerId, online) {
+        if (online) {
+            this.onlinePeers.add(peerId);
         } else {
-            delete this.peers[peerId];
+            this.onlinePeers.delete(peerId);
         }
+        localStorage.setItem('onlinePeers', JSON.stringify(Array.from(this.onlinePeers)));
     }
 
     getOnlinePeers() {
-        return Object.keys(this.peers);
+        return Array.from(this.onlinePeers);
     }
 
-    sendCallRequest(from, to) {
-        // Logic to send call request to the "to" peer
+    sendCallRequest(callerId, calleeId) {
+        this.storeMessage({ type: 'callRequest', callerId, calleeId });
+        console.log(`Call request from ${callerId} to ${calleeId}.`);
     }
 
-    sendCallAnswer(to, answer) {
-        // Logic to send call answer to the "to" peer
+    sendCallAnswer(callerId, calleeId, accepted) {
+        this.storeMessage({ type: 'callAnswer', callerId, calleeId, accepted });
+        console.log(`${accepted ? 'Accepted' : 'Declined'} call from ${callerId}`);
     }
 
-    sendIceCandidate(to, candidate) {
-        // Logic to send ICE candidate to the "to" peer
+    sendIceCandidate(peerId, candidate) {
+        this.storeMessage({ type: 'iceCandidate', peerId, candidate });
+        console.log(`ICE candidate sent for ${peerId}.`);
     }
 
-    handleMessage(message) {
-        // Logic to handle different types of messages
+    storeMessage(message) {
+        this.messages.push(message);
+        localStorage.setItem('messages', JSON.stringify(this.messages));
+    }
+
+    getMessages() {
+        return JSON.parse(localStorage.getItem('messages')) || [];
     }
 
     startPolling() {
-        setInterval(() => {
-            // Polling logic to check for updates
-        }, 1000);
+        if (!this.pollingInterval) {
+            this.pollingInterval = setInterval(() => {
+                console.log('Polling for messages...');
+            }, 5000);
+        }
+    }
+
+    stopPolling() {
+        clearInterval(this.pollingInterval);
+        this.pollingInterval = null;
+        console.log('Stopped polling.');
+    }
+
+    onMessage(callback) {
+        const messages = this.getMessages();
+        messages.forEach(callback);
+    }
+
+    disconnect(peerId) {
+        this.updatePresence(peerId, false);
+        console.log(`${peerId} disconnected.`);
     }
 }
 
-// Example usage:
+// Usage example
 const signalingServer = new SignalingServer();
 signalingServer.initialize();
-//...

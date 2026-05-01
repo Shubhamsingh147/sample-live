@@ -1,8 +1,8 @@
 class UIController {
     constructor() {
-        this.state = {};
-        this.userInfo = {};
-        this.callQuality = '';
+        this.userInfo = null;
+        this.usersList = [];
+        this.callTimer = null;
     }
 
     showLoading() {
@@ -10,57 +10,63 @@ class UIController {
     }
 
     showLogin() {
-        console.log('Displaying login screen...');
+        console.log('Showing login screen...');
     }
 
     showMain() {
-        console.log('Displaying main interface...');
+        console.log('Showing main interface...');
     }
 
-    setState(newState) {
-        this.state = { ...this.state, ...newState }; 
-        console.log('State updated:', this.state);
-    }
-
-    setUserInfo(user) {
-        this.userInfo = user;
-        console.log('User information set:', this.userInfo);
+    setUserInfo(userInfo) {
+        this.userInfo = userInfo;
+        console.log('User info set:', userInfo);
     }
 
     updateUsersList(users) {
+        this.usersList = users;
         console.log('Users list updated:', users);
     }
 
-    showIncomingCall(callDetails) {
-        console.log('Incoming call from:', callDetails);
+    showIncomingCall(callData) {
+        console.log('Incoming call from:', callData);
     }
 
-    showActiveCall(callDetails) {
-        console.log('Active call with:', callDetails);
-    }
-
-    attachCallControls() {
-        console.log('Call controls attached.');
+    showActiveCall(callData) {
+        console.log('Active call with:', callData);
     }
 
     startCallTimer() {
-        console.log('Call timer started.');
+        this.callTimer = setInterval(() => {
+            console.log('Call timer running...');
+        }, 1000);
     }
 
     stopCallTimer() {
+        clearInterval(this.callTimer);
         console.log('Call timer stopped.');
     }
 
     updateQuality(quality) {
-        this.callQuality = quality;
-        console.log('Call quality updated to:', quality);
+        console.log('Call quality updated:', quality);
     }
 
     endCall() {
-        console.log('Ending the call.');
+        console.log('Ending call...');
     }
 
     showNotification(message) {
         console.log('Notification:', message);
     }
+
+    attachLoginHandlers() {
+        console.log('Login handlers attached.');
+    }
+
+    attachCallControls() {
+        console.log('Call controls attached.');
+    }
 }
+
+// Example usage (to be removed in actual implementation):
+const uiController = new UIController();
+uiController.showLoading();

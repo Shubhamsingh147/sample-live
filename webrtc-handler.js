@@ -2,83 +2,115 @@ class WebRTCHandler {
     constructor() {
         this.localStream = null;
         this.peerConnection = null;
+        this.remoteStream = null;
+        this.isMicMuted = false;
+        this.isAudioMuted = false;
+        this.statsInterval = null;
     }
 
-    initializeLocalStream() {
-        navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-            .then(stream => {
-                this.localStream = stream;
-                // Attach local stream to video element
-            })
-            .catch(error => console.error('Error accessing media devices.', error));
+    async initializeLocalStream() {
+        try {
+            this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+            this.localStream.getTracks().forEach(track => {
+                this.localStream.addTrack(track);
+            });
+        } catch (error) {
+            console.error('Error initializing local stream: ', error);
+        }
     }
 
     createPeerConnection() {
         this.peerConnection = new RTCPeerConnection();
+        this.peerConnection.onicecandidate = event => {
+            if (event.candidate) {
+                // Logic to send candidate to remote peer
+                console.log('New ICE candidate: ', event.candidate);
+            }
+        };
+        this.peerConnection.ontrack = event => {
+            this.remoteStream = event.streams[0];
+            // Logic to attach remote stream to video element
+            console.log('Remote stream received');
+        };
+
         this.localStream.getTracks().forEach(track => {
             this.peerConnection.addTrack(track, this.localStream);
         });
     }
 
-    createOffer() {
-        return this.peerConnection.createOffer().then(offer => {
-            return this.peerConnection.setLocalDescription(offer);
-        });
+    async createOffer() {
+        const offer = await this.peerConnection.createOffer();
+        await this.peerConnection.setLocalDescription(offer);
+        // Logic to send offer to remote peer
+        console.log('Offer created: ', offer);
     }
 
-    createAnswer() {
-        return this.peerConnection.createAnswer().then(answer => {
-            return this.peerConnection.setLocalDescription(answer);
-        });
+    async createAnswer() {
+        const answer = await this.peerConnection.createAnswer();
+        await this.peerConnection.setLocalDescription(answer);
+        // Logic to send answer to remote peer
+        console.log('Answer created: ', answer);
     }
 
     handleOffer(offer) {
-        return this.peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+        this.peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+        this.createAnswer();
     }
 
     handleAnswer(answer) {
-        return this.peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+        this.peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
     }
 
     addIceCandidate(candidate) {
-        return this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        console.log('ICE candidate added: ', candidate);
     }
 
     toggleMicrophone() {
-        const audioTracks = this.localStream.getAudioTracks();
-        audioTracks.forEach(track => {
-            track.enabled = !track.enabled;
+        this.isMicMuted = !this.isMicMuted;
+        this.localStream.getAudioTracks().forEach(track => {
+            track.enabled = !this.isMicMuted;
         });
+        console.log('Microphone muted: ', this.isMicMuted);
     }
 
     toggleRemoteAudio() {
-        const remoteAudioTracks = this.peerConnection.getReceivers().map(receiver => receiver.track);
-        remoteAudioTracks.forEach(track => {
-            track.enabled = !track.enabled;
+        this.isAudioMuted = !this.isAudioMuted;
+        this.remoteStream.getAudioTracks().forEach(track => {
+            track.enabled = !this.isAudioMuted;
         });
+        console.log('Remote audio muted: ', this.isAudioMuted);
     }
 
     startStatsMonitoring() {
-        setInterval(() => {
-            this.peerConnection.getStats(null).then(stats => {
-                this.calculateQualityScore(stats);
+        this.statsInterval = setInterval(async () => {
+            const stats = await this.peerConnection.getStats();
+            stats.forEach(report => {
+                console.log(report);
             });
+            this.calculateQualityScore(stats);
         }, 1000);
     }
 
     calculateQualityScore(stats) {
-        // Implement quality score calculation based on stats
+        // Logic to calculate quality score based on stats
+        console.log('Quality Score calculated');
+    }
+
+    stopStatsMonitoring() {
+        clearInterval(this.statsInterval);
+        console.log('Stats monitoring stopped');
     }
 
     close() {
         this.peerConnection.close();
         this.localStream.getTracks().forEach(track => track.stop());
+        console.log('Peer connection closed');
     }
 
     cleanup() {
-        this.peerConnection = null;
-        this.localStream = null;
+        this.stopStatsMonitoring();
+        this.close();
+        console.log('Cleanup done');
     }
 }
-
-export default WebRTCHandler;

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Call Platform - CareConnect</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- Loading State -->
+        <div id="loadingState" class="state-overlay">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Initializing CareConnect...</p>
+            </div>
+        </div>
+
+        <!-- Login State -->
+        <div id="loginState" class="state-overlay hidden">
+            <div class="login-container">
+                <div class="login-card">
+                    <div class="logo">CC</div>
+                    <h1>CareConnect</h1>
+                    <p class="tagline">Professional Care, Human Connection</p>
+                    
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="userRole">I am a:</label>
+                            <select id="userRole" required>
+                                <option value="">Select role...</option>
+                                <option value="worker">Healthcare Worker / Professional</option>
+                                <option value="patient">Patient / Seeking Support</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="userName">Your Name:</label>
+                            <input type="text" id="userName" placeholder="Enter your name" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Join Session</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main App State -->
+        <div id="mainState" class="state-overlay hidden">
+            <div class="app-layout">
+                <!-- Header -->
+                <header class="app-header">
+                    <div class="header-left">
+                        <div class="logo-small">CC</div>
+                        <div>
+                            <h2>CareConnect</h2>
+                            <p class="user-info" id="userInfo"></p>
+                        </div>
+                    </div>
+                    <div class="header-right">
+                        <button class="btn btn-secondary btn-sm" id="logoutBtn">Disconnect</button>
+                    </div>
+                </header>
+
+                <!-- Main Content -->
+                <main class="app-main">
+                    <!-- Users List Panel -->
+                    <aside class="users-panel">
+                        <div class="panel-header">
+                            <h3>Online Users</h3>
+                            <span class="user-count" id="userCount">1</span>
+                        </div>
+                        <div class="users-list" id="usersList">
+                            <div class="user-item self">
+                                <div class="user-avatar">
+                                    <span id="myAvatarText">Me</span>
+                                </div>
+                                <div class="user-info-block">
+                                    <p class="user-name" id="myUserName">You</p>
+                                    <p class="user-role" id="myUserRole">Connecting...</p>
+                                </div>
+                                <span class="status-badge self">Connected</span>
+                            </div>
+                        </div>
+                    </aside>
+
+                    <!-- Call Panel -->
+                    <section class="call-panel">
+                        <div id="noCallState" class="call-state">
+                            <div class="empty-state">
+                                <div class="empty-icon">☎️</div>
+                                <h3>Ready for a call</h3>
+                                <p>Select a user from the list to start a voice conversation</p>
+                            </div>
+                        </div>
+
+                        <div id="callState" class="call-state hidden">
+                            <div class="call-container">
+                                <!-- Audio element for remote peer -->
+                                <audio id="remoteAudio" autoplay></audio>
+                                
+                                <!-- Call Header -->
+                                <div class="call-header">
+                                    <div class="call-info">
+                                        <h3 id="callUserName">-</h3>
+                                        <p id="callStatus">Connecting...</p>
+                                        <p id="callDuration" class="call-duration">00:00</p>
+                                    </div>
+                                    <div class="call-avatar">
+                                        <div class="avatar-large">
+                                            <span id="callAvatarText">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Call Controls -->
+                                <div class="call-controls">
+                                    <button id="micToggle" class="control-btn mic-on" title="Microphone">
+                                        <span class="icon">🎤</span>
+                                    </button>
+                                    <button id="endCallBtn" class="control-btn end-call" title="End Call">
+                                        <span class="icon">📞</span>
+                                    </button>
+                                    <button id="volumeToggle" class="control-btn volume-on" title="Speaker Volume">
+                                        <span class="icon">🔊</span>
+                                    </button>
+                                </div>
+
+                                <!-- Call Stats -->
+                                <div class="call-stats">
+                                    <div class="stat">
+                                        <span class="stat-label">Signal Quality:</span>
+                                        <span class="stat-value" id="signalQuality">--</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-label">Connection:</span>
+                                        <span class="stat-value" id="connectionStatus">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="incomingCallState" class="call-state hidden">
+                            <div class="incoming-call">
+                                <h2>Incoming Call</h2>
+                                <div class="incoming-avatar">
+                                    <span id="incomingAvatarText">-</span>
+                                </div>
+                                <p id="incomingCallerName">-</p>
+                                <div class="incoming-controls">
+                                    <button id="rejectCallBtn" class="control-btn reject">
+                                        <span class="icon">✕</span>
+                                    </button>
+                                    <button id="acceptCallBtn" class="control-btn accept">
+                                        <span class="icon">✓</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer" class="notification-container"></div>
+
+    <!-- Signaling Server Script -->
+    <script src="signaling-server.js"></script>
+    <!-- WebRTC Handler -->
+    <script src="webrtc-handler.js"></script>
+    <!-- UI Controller -->
+    <script src="ui-controller.js"></script>
+    <!-- Main App -->
+    <script src="app.js"></script>
+</body>
+</html>
